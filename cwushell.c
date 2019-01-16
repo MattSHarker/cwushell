@@ -4,44 +4,65 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <readline/readline.h>
-#include <readline/history.h>
+#include <ctype.h>
 
-#define MAXLEN = 128;	// the max number of letters
-#define MAXCOM = 128;	// the max amount of commands
+#define clear() printf("\033[H\033[J") 
+
+char prompt[] = "cwushell>";
 
 void init()
 {
     clear();
-    
-    printf("********** CWU SHELL **********\n");
-    printf("******* by Matt Harker ********\n");
-    
+    printf("\n***************************************");
+    printf("\n************** CWU SHELL **************");
+    printf("\n*********** by Matt Harker ************");
+    printf("\n***************************************");
+    printf("\n\nFor a list of commands enter \"manual\"\n\n");
     
 }
 
-int getInput(char* str)
+// displays a list of commands
+void displayHelp()
 {
-    char* = buff;
-    buff = readline("\n>> ");
+    printf("\n ******** HELP ********");
+    printf("\nList of commands:");
     
-    if(strlen(buff) != 0)
-    {
-        add_history(buff);
-        strcpy(str, buff);
-        return 0;
-    }
-    else
-    {
-        return 1;
-    }
+    printf("\nprompt <new_prompt>");
+    printf("\n    modifies the current shell prompt to <new_prompt>");
+    
+    printf("\ncpuinfo -switch");
+    printf("\n    available switches: -c, -t, -n");
+    
+    printf("\nmeminfo -switch");
+    printf("\n    availabe switches: -t, -u, -c");
+    
+    printf("\nmanual");
+    printf("\n    displays a list of commands available in this shell");
+    
+    printf("\nFor more info on specific commands, use -h or -help as a swicth\n");
 }
 
-int directory()
+// shows a help message for the prompt command
+void displayPromptHelp()
 {
-    char cwd[1024];
-    getcwd(cwd, sizeof(cwd));
-    printf(\nDir: %s", cwd);
+    printf("In order to use the prompt command, enter it as follows: \n");
+    printf("    prompt <new_prompt>\n");
+    printf("Enter what you want the new prompt to be where it says <new_prompt>\n");    
+}
+
+// changes the shell's prompt
+void changePrompt(char* str)
+{
+    strcpy(prompt, str);
+}
+
+// displays a help message for the cpuinfo command
+void displayCpuHelp()
+{
+    printf("cpuinfo has the following switches:\n");
+    printf("    -c: displays the clock speed\n");
+    printf("    -t: displays the cpu manufacturer\n");
+    printf("    -n: displays the number of cores\n");
 }
 
 // displays the speed of the cpu clock
@@ -64,6 +85,16 @@ void displayCpuCores()
     system("nproc --all");
 }
 
+
+// displays a help message for the meminfo command
+void displayMemHelp()
+{
+    printf("meminfo has the following switches:\n");
+    printf("    -t: displays the amount of available ram\n");
+    printf("    -u: displays the amount of used ram\n");
+    printf("    -c: displays the size of the L2 cache\n");
+}
+
 // displays the amount of available ram
 void displayAvailableRam()
 {
@@ -73,17 +104,131 @@ void displayAvailableRam()
 // displays the amount of used ram
 void displayUsedRam()
 {
-    long memFree = system("cat /proc/meminfo | grep 'Active:'");
+    system("cat /proc/meminfo | grep 'Active:'");
 }
 
 // displays the size of the L2 chache/core in bytes
-void displayChache()
+void displayCacheSize()
 {
     write(1, "Size of L2 cache (bytes): ", 26);
     long memFree = system("getconf LEVEL2_CACHE_SIZE");
 }
 
-int main()
+int startsWith(const char* pre, const char *str)
 {
-    display
+    return strncmp(pre, str, strlen(pre)) == 0;
+}
+
+int endsWithAngle(const char* str)
+{
+    str = strrchr(str, '>');
+    
+    if(str != NULL)
+        return (strcmp(str, ">"));
+    
+    return(-1);
+}
+
+int main(int argc, char** argv)
+{
+    init();
+    
+    char inputString[100];   // the input to be executed
+
+    while (1)
+    {
+        printf("\n%s ", prompt);
+        fgets(inputString, sizeof(inputString), stdin);
+        
+        // displays the general help message
+        if (strcmp(inputString, "manual\n") == 0 || strcmp(inputString, "help\n") == 0)
+        {
+            displayHelp();
+        }
+        
+        
+        // cpu info
+        else if(strcmp(inputString, "cpuinfo -c\n") == 0)
+        {
+            displayCpuClock();
+        }
+        else if(strcmp(inputString, "cpuinfo -t\n") == 0)
+        {
+            displayCpuType();
+        }
+        else if(strcmp(inputString, "cpuinfo -n\n") == 0)
+        {
+            displayCpuCores();
+        }
+        else if(strcmp(inputString, "cpuinfo\n")  == 0 || strcmp(inputString, "cpuinfo -h\n") == 0
+                                          || strcmp(inputString, "cpuinfo -help\n") == 0)
+        {
+            displayCpuHelp();
+        }
+          
+            
+        // meminfo
+        else if(strcmp(inputString, "meminfo\n") == 0 || strcmp(inputString, "meminfo -h\n") == 0
+                                               || strcmp(inputString, "meminfo -help\n") == 0)
+        {
+            displayMemHelp();
+        }
+        else if (strcmp(inputString, "meminfo -t\n") == 0)
+        {
+            displayAvailableRam();
+        }    
+        else if (strcmp(inputString, "meminfo -u\n") == 0)
+        {
+            displayUsedRam();
+        }
+        else if(strcmp(inputString, "meminfo -c\n") == 0)
+        {
+            displayCacheSize();
+        }
+        
+        
+        // The Prompt command
+        else if (strcmp(inputString, "prompt\n") != 0 && strcmp(inputString, "prompt -h\n") != 0
+                                                      && strcmp(inputString, "prompt -help\n") != 0)
+        {
+            char* token;
+            token = strtok(inputString, " \n");
+            token = strtok(NULL, " \n");
+            
+            strcpy(prompt, token);
+            
+        }
+        else if (strcmp(inputString, "prompt\n") == 0 || strcmp(inputString, "prompt -h\n") == 0
+                                                   || strcmp(inputString, "prompt -help\n") == 0)
+        {
+            displayPromptHelp();
+        }
+        
+        
+        // the exit command
+        else if (strcmp(inputString, "exit\n") == 0)
+        {
+            exit(0);
+        }
+        else if (strcmp(inputString, "exit\n") != 0 && startsWith("exit", inputString))
+        {
+            char* token;
+            token = strtok(inputString, " ");
+            token = strtok(NULL, " ");
+            
+            int extCode = atoi(token);
+            
+            if (isdigit(token))
+                exit(extCode);
+            else
+                exit(0);
+        }
+        
+        
+        // to handle anything else
+        else
+        {
+            system(inputString);
+        }
+    }
 }
