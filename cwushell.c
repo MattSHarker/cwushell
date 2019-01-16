@@ -13,10 +13,13 @@ char prompt[] = "cwushell>";
 void init()
 {
     clear();
+    printf("***************************************");
     printf("\n***************************************");
     printf("\n************** CWU SHELL **************");
     printf("\n*********** by Matt Harker ************");
     printf("\n***************************************");
+    printf("\n***************************************");
+    
     printf("\n\nFor a list of commands enter \"manual\"\n\n");
     
 }
@@ -189,7 +192,8 @@ int main(int argc, char** argv)
         
         // The Prompt command
         else if (strcmp(inputString, "prompt\n") != 0 && strcmp(inputString, "prompt -h\n") != 0
-                                                      && strcmp(inputString, "prompt -help\n") != 0)
+                                                      && strcmp(inputString, "prompt -help\n") != 0
+                                                      && startsWith("prompt", inputString))
         {
             char* token;
             token = strtok(inputString, " \n");
@@ -204,31 +208,37 @@ int main(int argc, char** argv)
             displayPromptHelp();
         }
         
-        
         // the exit command
-        else if (strcmp(inputString, "exit\n") == 0)
-        {
-            exit(0);
-        }
         else if (strcmp(inputString, "exit\n") != 0 && startsWith("exit", inputString))
         {
             char* token;
-            token = strtok(inputString, " ");
-            token = strtok(NULL, " ");
             
-            int extCode = atoi(token);
+            token = strtok(inputString, " \n");
+            token = strtok(NULL, " \n");
             
-            if (isdigit(token))
-                exit(extCode);
+            if (isdigit(token) == 1)
+            {
+                int extCode = atoi(token);
+                return extCode;
+            }
             else
-                exit(0);
+                return 0;
+            
         }
+        else if (strcmp(inputString, "exit\n") == 0)
+        {
+        
+            return 0;
+        }
+        
         
         
         // to handle anything else
         else
         {
+        
             system(inputString);
         }
     }
 }
+
